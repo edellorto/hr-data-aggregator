@@ -1,0 +1,64 @@
+# Google Cloud Build Configuration
+# ==================================
+# 
+# Questo file configura il build automatico su Google Cloud Run
+# quando fai push su GitHub
+#
+# Configurazione:
+# 1. Connetti il repository GitHub a Google Cloud Build
+# 2. Crea un trigger che punta a questo file
+# 3. Ogni push su main triggera il build automatico
+
+steps:
+  # Step 1: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/hr-data-aggregator:$SHORT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/hr-data-aggregator:latest'
+      - '.'
+
+  # Step 2: Push the image to Google Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/hr-data-aggregator:$SHORT_SHA'
+
+  # Step 3: Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/gke-deploy'
+    args:
+      - 'run'
+      - '--filename=.'
+      - '--image=gcr.io/$PROJECT_ID/hr-data-aggregator:$SHORT_SHA'
+      - '--location=us-central1'
+      - '--output=/workspace/output'
+
+  # Step 4: Deploy to Cloud Run (alternative method)
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'hr-data-aggregator'
+      - '--image=gcr.io/$PROJECT_ID/hr-data-aggregator:$SHORT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--memory=2Gi'
+      - '--cpu=1'
+      - '--timeout=3600'
+      - '--set-env-vars=ENVIRONMENT=production'
+
+# Images to be pushed to the registry
+images:
+  - 'gcr.io/$PROJECT_ID/hr-data-aggregator:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/hr-data-aggregator:latest'
+
+# Build timeout
+timeout: '1800s'
+
+# Build options
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
