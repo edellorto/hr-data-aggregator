@@ -7,11 +7,11 @@
 # Versioni testate con Python 3.9+
 
 # Core Data Processing
-pandas>=1.5.0
-numpy>=1.23.0
+pandas>=2.0.3
+numpy>=1.24.0
 
 # API & HTTP
-requests>=2.28.0
+requests>=2.31.0
 urllib3>=1.26.0
 
 # Database
